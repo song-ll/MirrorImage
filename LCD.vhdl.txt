@@ -1,0 +1,335 @@
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.STD_LOGIC_ARITH.ALL;
+use IEEE.STD_LOGIC_UNSIGNED.ALL;
+ 
+entity simple_count is
+    Port ( clock : in  STD_LOGIC;
+           enable : in  STD_LOGIC;
+           leds : out  STD_LOGIC_VECTOR (3 downto 0));
+end simple_count;
+ 
+architecture Behavioral of simple_count is
+ 
+signal count: std_logic_vector (3 downto 0) := "0000";
+ 
+begin
+ 
+process (clock) 
+begin
+   if clock='1' and clock'event then
+		if enable='1' then
+			count <= count + 1;
+		end if;
+   end if;
+end process;
+ 
+leds <= count(3 downto 0);
+ 
+end Behavioral;
+
+
+the ‘clock’ is connected to the 16MHz clock input on the FPGA, 
+the ‘enable’ is connected to button 1, and 
+the ‘leds’ bus is connected to the 4 LEDs on the board. 
+The UCF file for use:
+
+
+NET "clock" TNM_NET = clock;
+TIMESPEC TS_clock = PERIOD "clock" 62.5 ns HIGH 50%;
+ 
+NET "clock" LOC = C10;
+NET "enable" LOC = K3;
+NET "leds<0>" LOC = D14;
+NET "leds<1>" LOC = C16;
+NET "leds<2>" LOC = B14;
+NET "leds<3>" LOC = D13;
+ 
+NET "clock" IOSTANDARD = "LVCMOS33";
+NET "enable" IOSTANDARD = "LVCMOS33";
+NET "leds<0>" IOSTANDARD = "LVCMOS33";
+NET "leds<1>" IOSTANDARD = "LVCMOS33";
+NET "leds<2>" IOSTANDARD = "LVCMOS33";
+NET "leds<3>" IOSTANDARD = "LVCMOS33"
+
+
+
+LCD I/O BACKPACK
+PCB is designed with direct connections from the microcontroller to the 
+display using the 4 bit interface. Only 6 pins on the microcontroller 
+are used this way:
+Pin 7: RS
+Pin 6: Enable
+Pin 5: Data bit 4
+Pin 4: Data bit 5
+Pin 3: Data bit 6
+Pin 2: Data bit 7
+
+#include <LiquidCrystal.h>
+ 
+LiquidCrystal lcd(7, 6, 5, 4, 3, 2);
+ 
+void setup()
+{
+  lcd.print("hello, world!");
+}
+
+
+The tool makes it really easy to to design characters, icons and signs, you just click on each pixel to toggle it between dark and light, and when your “character” looks right, you simply copy the code to the right and paste it into your Arduino code, and there you have your new character.
+
+I tried to make a few different characters, as seen in the image above. If space is a little tight and you need a lot of information on screen, making special characters that combine two elements like the “degree centigrade” and “degree fahrenheit” in the image could help you out. Also signs like Ohm and micro are often useful in electronics.
+
+Below is the code I use to draw the screen above:
+
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+46
+47
+48
+49
+50
+51
+52
+53
+54
+55
+56
+57
+58
+59
+60
+61
+62
+63
+64
+65
+66
+67
+68
+69
+70
+71
+72
+73
+74
+75
+76
+77
+78
+79
+80
+81
+82
+83
+84
+85
+86
+87
+88
+89
+90
+91
+92
+93
+94
+95
+96
+97
+98
+99
+100
+101
+102
+103
+104
+105
+106
+107
+108
+109
+110
+111
+112
+113
+114
+115
+116
+117
+118
+119
+120
+121
+122
+123
+124
+125
+126
+#include  <LiquidCrystal.h>
+ 
+LiquidCrystal lcd(12, 11, 5, 4, 3, 2);
+ 
+// degree centigrade
+byte newChar1[8] = {
+  B01000,
+  B10100,
+  B01000,
+  B00011,
+  B00100,
+  B00100,
+  B00011,
+  B00000
+};
+ 
+// degree fahrenheit
+byte newChar2[8] = {
+  B01000,
+  B10100,
+  B01000,
+  B00011,
+  B00100,
+  B00111,
+  B00100,
+  B00000
+};
+ 
+// arrow right
+byte newChar3[8] = {
+  B00000,
+  B00100,
+  B00010,
+  B11111,
+  B00010,
+  B00100,
+  B00000,
+  B00000
+};
+ 
+// arrow left
+byte newChar4[8] = {
+  B00000,
+  B00100,
+  B01000,
+  B11111,
+  B01000,
+  B00100,
+  B00000,
+  B00000
+};
+ 
+// diameter sign (ø)
+byte newChar5[8] = {
+  B00000,
+  B01101,
+  B10010,
+  B10101,
+  B01001,
+  B10110,
+  B00000,
+  B00000
+};
+ 
+// boldface "h"
+byte newChar6[8] = {
+  B11000,
+  B11000,
+  B11110,
+  B11111,
+  B11011,
+  B11011,
+  B11011,
+  B00000
+};
+ 
+// ohm sign
+byte newChar7[8] = {
+  B00000,
+  B01110,
+  B10001,
+  B10001,
+  B10001,
+  B01010,
+  B11011,
+  B00000
+};
+ 
+// micro sign
+byte newChar8[8] = {
+  B00000,
+  B00000,
+  B00000,
+  B10010,
+  B10010,
+  B10010,
+  B11100,
+  B10000
+};
+ 
+int i = 0;
+ 
+void setup() {
+  lcd.createChar(0, newChar1);
+  lcd.createChar(1, newChar2);
+  lcd.createChar(2, newChar3);
+  lcd.createChar(3, newChar4);
+  lcd.createChar(4, newChar5);
+  lcd.createChar(5, newChar6);
+  lcd.createChar(6, newChar7);
+  lcd.createChar(7, newChar8);
+  lcd.begin(16, 2);
+ 
+  for(int n = 0; n < 8; n++)
+  {
+    lcd.setCursor(n*2,0);
+    lcd.write(n);
+  }
+ 
+  lcd.setCursor(0, 1);
+  lcd.print("hackmeister.dk");
+}
+ 
+void loop() {
+ 
+}
